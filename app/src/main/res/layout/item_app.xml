@@ -3,34 +3,33 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:padding="8dp"
     android:clickable="true"
     android:focusable="true"
-    android:layout_margin="1dp"
+    android:paddingTop="8dp"
+    android:paddingBottom="8dp"
     android:background="?android:selectableItemBackground"
     xmlns:tools="http://schemas.android.com/tools">
 
     <androidx.appcompat.widget.AppCompatImageView
         android:id="@+id/appIcon"
-        android:layout_width="28dp"
-        android:layout_height="28dp"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        tools:src="@drawable/ic_launcher_background"/>
+        app:layout_constraintTop_toTopOf="parent" />
+
     <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/appName"
-        android:layout_width="0dp"
+        android:layout_width="100dp"
         android:layout_height="wrap_content"
         android:padding="8dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        tools:text="App Name"
-        android:layout_marginStart="8dp"
-        android:layout_marginEnd="8dp"
-        android:textSize="18sp"
         android:textColor="@android:color/white"
-        app:layout_constraintTop_toTopOf="parent"
+        android:textSize="12sp"
+        android:textAlignment="center"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toEndOf="@id/appIcon"/>
+        app:layout_constraintEnd_toEndOf="@+id/appIcon"
+        app:layout_constraintStart_toStartOf="@+id/appIcon"
+        app:layout_constraintTop_toBottomOf="@+id/appIcon"
+        tools:text="App Name" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -2,98 +2,60 @@ package com.appseon.diy_launcher
 
 import android.content.Intent
 import android.content.pm.*
-import android.os.Build
+import android.graphics.Color
 import android.os.Bundle
-import android.os.Process
-import androidx.annotation.RequiresApi
+import android.view.WindowManager
 import androidx.appcompat.app.AppCompatActivity
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.StaggeredGridLayoutManager
+import androidx.recyclerview.widget.GridLayoutManager
 import com.appseon.diy_launcher.databinding.ActivityMainBinding
+import com.appseon.diy_launcher.utils.Utils.fetchInstalledApps
+import com.appseon.diy_launcher.utils.Utils.isMyAppLauncherDefault
 
 
 class MainActivity : AppCompatActivity() {
-    private lateinit var resolvedApplist: List<ResolveInfo>
-    lateinit var mainBinding: ActivityMainBinding
+    private lateinit var mainBinding: ActivityMainBinding
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        setWindowFlag(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS, true)
+        window.statusBarColor = Color.TRANSPARENT
         mainBinding = ActivityMainBinding.inflate(layoutInflater)
         val view = mainBinding.root
         setContentView(view)
-
-//        getInstalledApps2()
-        fetchInstalledApps()
+        renderInstalledApps()
+        println("Default Launcher: ${isMyAppLauncherDefault(context = applicationContext, packageManager = packageManager)}")
     }
 
-    fun getInstalledApps2() {
-        resolvedApplist = packageManager
-            .queryIntentActivities(Intent(Intent.ACTION_MAIN,null)
-                .addCategory(Intent.CATEGORY_LAUNCHER),0)
-        val appList = ArrayList<AppBlock>()
-
-        for (ri in resolvedApplist) {
-            if(ri.activityInfo.packageName!=this.packageName) {
-                val app = AppBlock(
-                    ri.loadLabel(packageManager).toString(),
-                    ri.activityInfo.loadIcon(packageManager),
-                    ri.activityInfo.packageName
-                )
-                appList.add(app)
-            }
-        }
-        println("Total Apps: ${appList.size}")
-        for (app in appList) {
-            println("App Name: ${app.appName}, Package Name: ${app.packageName}")
-        }
-
-//        mainBinding.appList.layoutManager = StaggeredGridLayoutManager(2, LinearLayoutManager.VERTICAL )
-//        mainBinding.appList.adapter = Adapter(this).also {
-//            it.passAppList(appList.sortedWith(
-//                Comparator<AppBlock> { o1, o2 -> o1?.appName?.compareTo(o2?.appName?:"",true)?:0; }
-//            ))
-//        }
-    }
-
-    @RequiresApi(Build.VERSION_CODES.S)
-    private fun fetchInstalledApps() {
-        val launcherApps = getSystemService(LauncherApps::class.java)
-
-        // Get the list of launcher activity info
-        val activityList = launcherApps.getActivityList(null, Process.myUserHandle())
-        println("Total Size: ${activityList.size}")
-        var appList = mutableListOf<LauncherActivityInfo>()
-        for (info in activityList) {
-            // Retrieve app information
-            val appName = info.label.toString()
-            val packageName = info.componentName.packageName
-            val appIcon = info.getIcon(0) // You can specify icon size here
-            println("App Name: ${appName}, Package Name: $packageName")
-            // Do something with the app information (e.g., display it, store it, etc.)
-            val isLaunchable: Boolean = isAppLaunchable(packageManager, packageName)
-            if (isLaunchable){
-                appList.add(info)
-            }
-        }
-
-        mainBinding.appList.layoutManager = StaggeredGridLayoutManager(2, LinearLayoutManager.VERTICAL )
+    private fun renderInstalledApps() {
+        val activityList = fetchInstalledApps(context = applicationContext, packageManager = packageManager)
+        mainBinding.appList.layoutManager = GridLayoutManager(this, 4)
         mainBinding.appList.adapter = Adapter(this).also {
             it.passAppList(activityList)
         }
     }
 
-    private fun isAppLaunchable(packageManager: PackageManager, packageName: String): Boolean {
-        val launchIntent = packageManager.getLaunchIntentForPackage(packageName)
-        return launchIntent != null
-    }
-
-    fun getInstalledApps(): ArrayList<ApplicationInfo> {
-        val launcherApps = ArrayList<ApplicationInfo>()
-        val packageManager: PackageManager = packageManager
-        val apps = packageManager.getInstalledApplications(PackageManager.GET_META_DATA)
-
-        for (appInfo in apps) {
-            launcherApps.add(appInfo)
+    private fun setWindowFlag(bits: Int, on: Boolean) {
+        val win = window
+        val winParams = win.attributes
+        if (on) {
+            winParams.flags = winParams.flags or bits
+        } else {
+            winParams.flags = winParams.flags and bits.inv()
         }
-        return launcherApps
+        win.attributes = winParams
     }
+
+    override fun onDestroy() {
+        val intent = Intent(Intent.ACTION_MAIN)
+        val packageManager: PackageManager = packageManager
+        for (resolveInfo in packageManager.queryIntentActivities(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME), PackageManager.MATCH_DEFAULT_ONLY)) {
+            if (packageName != resolveInfo.activityInfo.packageName)  //if this activity is not in our activity (in other words, it's another default home screen)
+            {
+                startActivity(intent)
+            }
+            break
+        }
+        super.onDestroy()
+    }
+
+    override fun onBackPressed() { }
 }
